@@ -116,7 +116,7 @@ resource "aws_instance" "ec2_backend" {
   user_data = <<-EOF
               #!/bin/bash
               apt-get update
-              apt-get install -y openjdk-8-jdk
+              apt-get install -y openjdk-11-jdk
               EOF
 }
 
@@ -149,7 +149,7 @@ resource "aws_db_instance" "ada_rds" {
   engine_version       = "5.7"
   instance_class       = "db.t2.micro"
   db_name              = "adaDatabase"
-  identifier           = "adaDatabase"
+  identifier           = "ada-database"
   username             = "ada_admin"
   password             = "senhaDoBanco"
   parameter_group_name = "default.mysql5.7"
