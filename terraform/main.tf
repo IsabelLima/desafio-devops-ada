@@ -130,6 +130,12 @@ resource "aws_security_group" "backend_sg" {
     protocol    = "tcp"
     cidr_blocks = ["189.73.139.107/32"] # coloquei meu ip aqui
   }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_instance" "ec2_backend" {
@@ -143,11 +149,10 @@ resource "aws_instance" "ec2_backend" {
   }
   user_data = <<-EOF
               #!/bin/bash
-              apt-get update
-              apt-get install -y openjdk-11-jdk
+              sudo yum update -y
+              sudo amazon-linux-extras install -y java-openjdk11
               EOF
 }
-
 
 resource "aws_security_group" "rds_sg" {
   name_prefix = "rds_sg"
