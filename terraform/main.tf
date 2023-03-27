@@ -94,6 +94,46 @@ resource "aws_subnet" "ada_private_1c" {
     }
 }
 
+resource "aws_eip" "nat" {
+  vpc = true
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.ada_private_1a.id
+  tags = {
+    Name = "nat-gateway"
+  }
+}
+
+resource "aws_route_table_association" "ada_private_1a_association" {
+  subnet_id      = aws_subnet.ada_private_1a.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "ada_private_1b_association" {
+  subnet_id      = aws_subnet.ada_private_1b.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "ada_private_1c_association" {
+  subnet_id      = aws_subnet.ada_private_1c.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.ada_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = {
+    Name = "private"
+  }
+}
+
 resource "aws_route_table_association" "ada_public_1a_subnet_association" {
   subnet_id      = aws_subnet.ada_public_1a.id
   route_table_id = aws_route_table.ada_route_table.id
