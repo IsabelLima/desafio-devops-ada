@@ -233,27 +233,33 @@ resource "aws_db_instance" "ada_rds" {
 
 resource "aws_s3_bucket" "ada_frontend_bucket" {
   bucket = "ada-frontend-isabel"
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PublicReadGetObject",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::ada-frontend-isabel/*"
-      ]
-    }
-  ]
 }
-POLICY
-  acl    = "public-read" 
-  website {
-    index_document = "index.html"
-  }
 
+resource "aws_s3_bucket_policy" "allow_access" {
+  bucket = aws_s3_bucket.ada_frontend_bucket.id
+  policy = data.aws_iam_policy_document.allow_access.json
+}
+
+data "aws_iam_policy_document" "allow_access" {
+  statement {
+    sid = "PublicReadGetObject"
+    actions = [
+      "s3:GetObject"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    resources = [
+      "arn:aws:s3:::ada-frontend-isabel/*"
+    ]
+  }
+}
+
+
+resource "aws_s3_bucket_website_configuration" "example" {
+  bucket = aws_s3_bucket.ada_frontend_bucket.id
+  index_document {
+    suffix = "index.html"
+  }
 }
