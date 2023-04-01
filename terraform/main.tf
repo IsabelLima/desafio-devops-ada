@@ -230,3 +230,30 @@ resource "aws_db_instance" "ada_rds" {
   db_subnet_group_name = aws_db_subnet_group.ada_db_subnet_group.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 }
+
+resource "aws_s3_bucket" "ada_frontend_bucket" {
+  bucket = "ada-frontend-isabel"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::ada-frontend-isabel/*"
+      ]
+    }
+  ]
+}
+POLICY
+  acl    = "public-read" 
+  website {
+    index_document = "index.html"
+  }
+
+}
