@@ -231,35 +231,77 @@ resource "aws_db_instance" "ada_rds" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 }
 
-resource "aws_s3_bucket" "ada_frontend_bucket" {
-  bucket = "ada-frontend-isabel"
-}
+# resource "aws_s3_bucket" "ada_frontend_bucket" {
+#   bucket = "ada-frontend-isabel"
+# }
 
-resource "aws_s3_bucket_policy" "allow_access" {
-  bucket = aws_s3_bucket.ada_frontend_bucket.id
-  policy = data.aws_iam_policy_document.allow_access.json
-}
+# resource "aws_s3_bucket_policy" "allow_access" {
+#   bucket = aws_s3_bucket.ada_frontend_bucket.id
+#   policy = data.aws_iam_policy_document.allow_access.json
+# }
 
-data "aws_iam_policy_document" "allow_access" {
-  statement {
-    sid = "PublicReadGetObject"
-    actions = [
-      "s3:GetObject"
+# data "aws_iam_policy_document" "allow_access" {
+#   statement {
+#     sid = "PublicReadGetObject"
+#     actions = [
+#       "s3:GetObject"
+#     ]
+#     principals {
+#       type        = "AWS"
+#       identifiers = ["*"]
+#     }
+#     resources = [
+#       "arn:aws:s3:::ada-frontend-isabel/*"
+#     ]
+#   }
+# }
+
+
+# resource "aws_s3_bucket_website_configuration" "example" {
+#   bucket = aws_s3_bucket.ada_frontend_bucket.id
+#   index_document {
+#     suffix = "index.html"
+#   }
+# }
+
+resource "aws_iam_role" "eks_role" {
+  name = "eks-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+      }
     ]
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-    resources = [
-      "arn:aws:s3:::ada-frontend-isabel/*"
-    ]
-  }
+  })
 }
 
+resource "aws_iam_role_policy_attachment" "eks_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.eks_role.name
+}
 
-resource "aws_s3_bucket_website_configuration" "example" {
-  bucket = aws_s3_bucket.ada_frontend_bucket.id
-  index_document {
-    suffix = "index.html"
+resource "aws_iam_role_policy_attachment" "eks_service_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+  role       = aws_iam_role.eks_role.name
+}
+
+resource "aws_eks_cluster" "eks_cluster" {
+  name     = "eks-cluster"
+  role_arn = aws_iam_role.eks_role.arn
+
+  vpc_config {
+    subnet_ids = [
+      aws_subnet.ada_private_1a.id,
+      aws_subnet.ada_private_1b.id,
+      aws_subnet.ada_private_1c.id,
+      aws_subnet.ada_public_1a.id,
+      aws_subnet.ada_public_1b.id,
+      aws_subnet.ada_public_1c.id
+    ]
   }
 }

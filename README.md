@@ -5,7 +5,8 @@ Desafio de devops para a empresa Ada, seguindo esse enunciado https://github.com
 ## Como subir a infra
 
 Em primeiro lugar, é necessário estar com as credenciais da AWS configuradas.
-Dentro do diretorio terraform, executar o comando  `terraform apply`. Esse comando ira criar a vpc com 3 subnets públicas e 3 privadas, com rotas para acessar internet a partir da subnet pública, uma ec2 na subnet pública com jdk 11 instalado e um RDS MySQL na subnet privada com security group permitindo apenas a EC2 acessar.
+Para ver quais recursos serao alterados, dentro do diretorio terraform, executar o comando  `terraform plan`.
+Para criar os recursos,  executar o comando  `terraform apply`. Esse comando irá criar a vpc com 3 subnets públicas e 3 privadas, com rotas para acessar internet a partir da subnet pública, uma ec2 na subnet pública com jdk 11 instalado, um RDS MySQL na subnet privada com security group permitindo apenas a EC2 acessar e um cluster EKS.
 
 Para destruir os recursos, executar o comando `terraform destroy`.
 
