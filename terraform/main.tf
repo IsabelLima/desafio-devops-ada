@@ -135,3 +135,11 @@ module "eks" {
     }
   }
 }
+
+resource "aws_ecr_repository" "ada_frontend" {
+  name                 = "ada-frontend"
+}
+
+resource "aws_ecr_repository" "ada_backend" {
+  name                 = "ada-backend"
+}
