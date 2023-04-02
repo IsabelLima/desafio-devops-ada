@@ -13,145 +13,174 @@ provider "aws" {
   region  = "us-east-1"
 }
 
-resource "aws_vpc" "ada_vpc" {
-  cidr_block = "10.0.0.0/24"
+data "aws_availability_zones" "available" {}
 
-  tags = {
-    name = "ada"
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "3.19.0"
+
+  name = "ada-vpc"
+
+  cidr = "10.0.0.0/24"
+  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
+
+  private_subnets = ["10.0.0.96/27", "10.0.0.128/27", "10.0.0.160/27"]
+  public_subnets  = ["10.0.0.0/27", "10.0.0.32/27", "10.0.0.64/27"]
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
+
+  public_subnet_tags = {
+    "kubernetes.io/cluster/ada-cluster" = "shared"
+    "kubernetes.io/role/elb"                      = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/cluster/ada-cluster" = "shared"
+    "kubernetes.io/role/internal-elb"             = 1
   }
 }
 
-resource "aws_internet_gateway" "ada_igw" {
-  vpc_id = aws_vpc.ada_vpc.id
-}
+# resource "aws_vpc" "ada_vpc" {
+#   cidr_block = "10.0.0.0/24"
 
-resource "aws_route_table" "ada_route_table" {
-  vpc_id = aws_vpc.ada_vpc.id
+#   tags = {
+#     name = "ada"
+#   }
+# }
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ada_igw.id
-  }
-}
+# resource "aws_internet_gateway" "ada_igw" {
+#   vpc_id = aws_vpc.ada_vpc.id
+# }
 
-resource "aws_subnet" "ada_public_1a" {
-    vpc_id = aws_vpc.ada_vpc.id
-    cidr_block = "10.0.0.0/27"
-    map_public_ip_on_launch = "true"
-    availability_zone = "us-east-1a"
-    tags = {
-        Name = "ada_public_1a"
-    }
-}
+# resource "aws_route_table" "ada_route_table" {
+#   vpc_id = aws_vpc.ada_vpc.id
 
-resource "aws_subnet" "ada_public_1b" {
-    vpc_id = aws_vpc.ada_vpc.id
-    cidr_block = "10.0.0.32/27"
-    map_public_ip_on_launch = "true"
-    availability_zone = "us-east-1b"
-    tags = {
-        Name = "ada_public_1b"
-    }
-}
+#   route {
+#     cidr_block = "0.0.0.0/0"
+#     gateway_id = aws_internet_gateway.ada_igw.id
+#   }
+# }
 
-resource "aws_subnet" "ada_public_1c" {
-    vpc_id = aws_vpc.ada_vpc.id
-    cidr_block = "10.0.0.64/27"
-    map_public_ip_on_launch = "true"
-    availability_zone = "us-east-1c"
-    tags = {
-        Name = "ada_public_1c"
-    }
-}
+# resource "aws_subnet" "ada_public_1a" {
+#     vpc_id = aws_vpc.ada_vpc.id
+#     cidr_block = "10.0.0.0/27"
+#     map_public_ip_on_launch = "true"
+#     availability_zone = "us-east-1a"
+#     tags = {
+#         Name = "ada_public_1a"
+#     }
+# }
 
-resource "aws_subnet" "ada_private_1a" {
-    vpc_id = aws_vpc.ada_vpc.id
-    cidr_block = "10.0.0.96/27"
-    map_public_ip_on_launch = "false"
-    availability_zone = "us-east-1a"
-    tags = {
-        Name = "ada_private_1a"
-    }
-}
+# resource "aws_subnet" "ada_public_1b" {
+#     vpc_id = aws_vpc.ada_vpc.id
+#     cidr_block = "10.0.0.32/27"
+#     map_public_ip_on_launch = "true"
+#     availability_zone = "us-east-1b"
+#     tags = {
+#         Name = "ada_public_1b"
+#     }
+# }
 
-resource "aws_subnet" "ada_private_1b" {
-    vpc_id = aws_vpc.ada_vpc.id
-    cidr_block = "10.0.0.128/27"
-    map_public_ip_on_launch = "false"
-    availability_zone = "us-east-1b"
-    tags = {
-        Name = "ada_private_1b"
-    }
-}
+# resource "aws_subnet" "ada_public_1c" {
+#     vpc_id = aws_vpc.ada_vpc.id
+#     cidr_block = "10.0.0.64/27"
+#     map_public_ip_on_launch = "true"
+#     availability_zone = "us-east-1c"
+#     tags = {
+#         Name = "ada_public_1c"
+#     }
+# }
 
-resource "aws_subnet" "ada_private_1c" {
-    vpc_id = aws_vpc.ada_vpc.id
-    cidr_block = "10.0.0.160/27"
-    map_public_ip_on_launch = "false"
-    availability_zone = "us-east-1c"
-    tags = {
-        Name = "ada_private_1c"
-    }
-}
+# resource "aws_subnet" "ada_private_1a" {
+#     vpc_id = aws_vpc.ada_vpc.id
+#     cidr_block = "10.0.0.96/27"
+#     map_public_ip_on_launch = "false"
+#     availability_zone = "us-east-1a"
+#     tags = {
+#         Name = "ada_private_1a"
+#     }
+# }
 
-resource "aws_eip" "nat" {
-  vpc = true
-}
+# resource "aws_subnet" "ada_private_1b" {
+#     vpc_id = aws_vpc.ada_vpc.id
+#     cidr_block = "10.0.0.128/27"
+#     map_public_ip_on_launch = "false"
+#     availability_zone = "us-east-1b"
+#     tags = {
+#         Name = "ada_private_1b"
+#     }
+# }
 
-resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.ada_private_1a.id
-  tags = {
-    Name = "nat-gateway"
-  }
-}
+# resource "aws_subnet" "ada_private_1c" {
+#     vpc_id = aws_vpc.ada_vpc.id
+#     cidr_block = "10.0.0.160/27"
+#     map_public_ip_on_launch = "false"
+#     availability_zone = "us-east-1c"
+#     tags = {
+#         Name = "ada_private_1c"
+#     }
+# }
 
-resource "aws_route_table_association" "ada_private_1a_association" {
-  subnet_id      = aws_subnet.ada_private_1a.id
-  route_table_id = aws_route_table.private.id
-}
+# resource "aws_eip" "nat" {
+#   vpc = true
+# }
 
-resource "aws_route_table_association" "ada_private_1b_association" {
-  subnet_id      = aws_subnet.ada_private_1b.id
-  route_table_id = aws_route_table.private.id
-}
+# resource "aws_nat_gateway" "nat" {
+#   allocation_id = aws_eip.nat.id
+#   subnet_id     = aws_subnet.ada_private_1a.id
+#   tags = {
+#     Name = "nat-gateway"
+#   }
+# }
 
-resource "aws_route_table_association" "ada_private_1c_association" {
-  subnet_id      = aws_subnet.ada_private_1c.id
-  route_table_id = aws_route_table.private.id
-}
+# resource "aws_route_table_association" "ada_private_1a_association" {
+#   subnet_id      = aws_subnet.ada_private_1a.id
+#   route_table_id = aws_route_table.private.id
+# }
 
-resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.ada_vpc.id
+# resource "aws_route_table_association" "ada_private_1b_association" {
+#   subnet_id      = aws_subnet.ada_private_1b.id
+#   route_table_id = aws_route_table.private.id
+# }
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat.id
-  }
+# resource "aws_route_table_association" "ada_private_1c_association" {
+#   subnet_id      = aws_subnet.ada_private_1c.id
+#   route_table_id = aws_route_table.private.id
+# }
 
-  tags = {
-    Name = "private"
-  }
-}
+# resource "aws_route_table" "private" {
+#   vpc_id = aws_vpc.ada_vpc.id
 
-resource "aws_route_table_association" "ada_public_1a_subnet_association" {
-  subnet_id      = aws_subnet.ada_public_1a.id
-  route_table_id = aws_route_table.ada_route_table.id
-}
+#   route {
+#     cidr_block = "0.0.0.0/0"
+#     nat_gateway_id = aws_nat_gateway.nat.id
+#   }
 
-resource "aws_route_table_association" "ada_public_1b_subnet_association" {
-  subnet_id      = aws_subnet.ada_public_1b.id
-  route_table_id = aws_route_table.ada_route_table.id
-}
+#   tags = {
+#     Name = "private"
+#   }
+# }
 
-resource "aws_route_table_association" "ada_public_1c_subnet_association" {
-  subnet_id      = aws_subnet.ada_public_1c.id
-  route_table_id = aws_route_table.ada_route_table.id
-}
+# resource "aws_route_table_association" "ada_public_1a_subnet_association" {
+#   subnet_id      = aws_subnet.ada_public_1a.id
+#   route_table_id = aws_route_table.ada_route_table.id
+# }
+
+# resource "aws_route_table_association" "ada_public_1b_subnet_association" {
+#   subnet_id      = aws_subnet.ada_public_1b.id
+#   route_table_id = aws_route_table.ada_route_table.id
+# }
+
+# resource "aws_route_table_association" "ada_public_1c_subnet_association" {
+#   subnet_id      = aws_subnet.ada_public_1c.id
+#   route_table_id = aws_route_table.ada_route_table.id
+# }
 
 resource "aws_security_group" "backend_sg" {
   name_prefix = "backend_sg"
-  vpc_id = aws_vpc.ada_vpc.id
+  vpc_id = module.vpc.vpc_id
   ingress {
     from_port   = 8080
     to_port     = 8080
@@ -178,25 +207,9 @@ resource "aws_security_group" "backend_sg" {
   }
 }
 
-resource "aws_instance" "ec2_backend" {
-  ami           = "ami-0fe472d8a85bc7b0e" #pegar dinamico ultimo ami de amazon linux
-  instance_type = "t2.micro"
-  key_name      = "ada"
-  vpc_security_group_ids = [aws_security_group.backend_sg.id]
-  subnet_id = aws_subnet.ada_public_1a.id
-  tags = {
-    Name = "Ada Backend"
-  }
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo yum update -y
-              sudo amazon-linux-extras install -y java-openjdk11
-              EOF
-}
-
 resource "aws_security_group" "rds_sg" {
   name_prefix = "rds_sg"
-  vpc_id = aws_vpc.ada_vpc.id
+  vpc_id = module.vpc.vpc_id
 }
 
 resource "aws_security_group_rule" "allow_backend_access_rds" {
@@ -210,7 +223,7 @@ resource "aws_security_group_rule" "allow_backend_access_rds" {
 
 resource "aws_db_subnet_group" "ada_db_subnet_group" {
   name       = "ada_db_subnet_group"
-  subnet_ids = [aws_subnet.ada_private_1a.id, aws_subnet.ada_private_1b.id, aws_subnet.ada_private_1c.id]
+  subnet_ids = module.vpc.private_subnets
   tags = {
     Name = "Ada DB subnet group"
   }
@@ -231,77 +244,57 @@ resource "aws_db_instance" "ada_rds" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 }
 
-# resource "aws_s3_bucket" "ada_frontend_bucket" {
-#   bucket = "ada-frontend-isabel"
-# }
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "19.5.1"
 
-# resource "aws_s3_bucket_policy" "allow_access" {
-#   bucket = aws_s3_bucket.ada_frontend_bucket.id
-#   policy = data.aws_iam_policy_document.allow_access.json
-# }
+  cluster_name    = "ada-cluster"
+  cluster_version = "1.25"
 
-# data "aws_iam_policy_document" "allow_access" {
-#   statement {
-#     sid = "PublicReadGetObject"
-#     actions = [
-#       "s3:GetObject"
-#     ]
-#     principals {
-#       type        = "AWS"
-#       identifiers = ["*"]
-#     }
-#     resources = [
-#       "arn:aws:s3:::ada-frontend-isabel/*"
-#     ]
-#   }
-# }
+  vpc_id                         = module.vpc.vpc_id
+  subnet_ids                     = module.vpc.private_subnets
+  cluster_endpoint_public_access = true
 
+  eks_managed_node_group_defaults = {
+    ami_type = "AL2_x86_64"
+  }
 
-# resource "aws_s3_bucket_website_configuration" "example" {
-#   bucket = aws_s3_bucket.ada_frontend_bucket.id
-#   index_document {
-#     suffix = "index.html"
-#   }
-# }
+  eks_managed_node_groups = {
+    one = {
+      name = "node-group-1"
 
-resource "aws_iam_role" "eks_role" {
-  name = "eks-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
+      instance_types = ["t2.micro"]
 
-resource "aws_iam_role_policy_attachment" "eks_policy_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_service_policy_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = aws_iam_role.eks_role.name
-}
-
-resource "aws_eks_cluster" "eks_cluster" {
-  name     = "eks-cluster"
-  role_arn = aws_iam_role.eks_role.arn
-
-  vpc_config {
-    subnet_ids = [
-      aws_subnet.ada_private_1a.id,
-      aws_subnet.ada_private_1b.id,
-      aws_subnet.ada_private_1c.id,
-      aws_subnet.ada_public_1a.id,
-      aws_subnet.ada_public_1b.id,
-      aws_subnet.ada_public_1c.id
-    ]
+      min_size     = 1
+      max_size     = 1
+      desired_size = 1
+    }
   }
 }
+
+# # https://aws.amazon.com/blogs/containers/amazon-ebs-csi-driver-is-now-generally-available-in-amazon-eks-add-ons/ 
+# data "aws_iam_policy" "ebs_csi_policy" {
+#   arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+# }
+
+# module "irsa-ebs-csi" {
+#   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+#   version = "4.7.0"
+
+#   create_role                   = true
+#   role_name                     = "AmazonEKSTFEBSCSIRole-${module.eks.cluster_name}"
+#   provider_url                  = module.eks.oidc_provider
+#   role_policy_arns              = [data.aws_iam_policy.ebs_csi_policy.arn]
+#   oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+# }
+
+# resource "aws_eks_addon" "ebs-csi" {
+#   cluster_name             = module.eks.cluster_name
+#   addon_name               = "aws-ebs-csi-driver"
+#   addon_version            = "v1.5.2-eksbuild.1"
+#   service_account_role_arn = module.irsa-ebs-csi.iam_role_arn
+#   tags = {
+#     "eks_addon" = "ebs-csi"
+#     "terraform" = "true"
+#   }
+# }
