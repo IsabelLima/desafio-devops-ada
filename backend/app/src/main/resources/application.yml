@@ -10,9 +10,9 @@ spring:
         show_sql: true
         format_sql: true
   datasource:
-    url: ${MYSQL_DB_HOST}
-    username: ${MYSQL_DB_USER}
-    password: ${MYSQL_DB_PASS}
+    url: jdbc:mysql://ada-database.ch7yon1jnlkb.us-east-1.rds.amazonaws.com:3306/adaDatabase
+    username: ada_admin
+    password: senhaDoBanco
 
 security:
   oauth2:
