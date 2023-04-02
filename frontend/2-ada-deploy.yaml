@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: ada-frontend
+  name: ada-frontend
+  namespace: ada-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ada-frontend
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: ada-frontend
+    spec:
+      containers:
+      - image: 572509365991.dkr.ecr.us-east-1.amazonaws.com/ada-frontend:latest
+        name: ada-frontend
+        resources: {}
+status: {}
