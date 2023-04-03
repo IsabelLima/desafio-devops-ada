@@ -71,43 +71,6 @@ resource "aws_security_group" "backend_sg" {
   }
 }
 
-resource "aws_security_group" "rds_sg" {
-  name_prefix = "rds_sg"
-  vpc_id = module.vpc.vpc_id
-}
-
-resource "aws_security_group_rule" "allow_backend_access_rds" {
-  type        = "ingress"
-  from_port   = 3306
-  to_port     = 3306
-  protocol    = "tcp"
-  source_security_group_id = aws_security_group.backend_sg.id
-  security_group_id = aws_security_group.rds_sg.id
-}
-
-resource "aws_db_subnet_group" "ada_db_subnet_group" {
-  name       = "ada_db_subnet_group"
-  subnet_ids = module.vpc.private_subnets
-  tags = {
-    Name = "Ada DB subnet group"
-  }
-}
-
-resource "aws_db_instance" "ada_rds" {
-  allocated_storage    = 20
-  engine               = "mysql"
-  engine_version       = "5.7"
-  instance_class       = "db.t2.micro"
-  db_name              = "adaDatabase"
-  identifier           = "ada-database"
-  username             = "ada_admin"
-  password             = "senhaDoBanco"
-  parameter_group_name = "default.mysql5.7"
-  skip_final_snapshot  = true
-  db_subnet_group_name = aws_db_subnet_group.ada_db_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-}
-
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "19.5.1"
@@ -132,8 +95,53 @@ module "eks" {
       min_size     = 1
       max_size     = 2
       desired_size = 2
+
+      vpc_security_group_ids  = [aws_security_group.backend_sg.id]
     }
   }
+}
+
+resource "aws_security_group" "rds_sg" {
+  name_prefix = "rds_sg"
+  vpc_id = module.vpc.vpc_id
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    security_groups = [ aws_security_group.backend_sg.id ]
+  }
+}
+
+resource "aws_security_group_rule" "allow_myself_access_rds" {
+  type        = "ingress"
+  from_port   = 3306
+  to_port     = 3306
+  protocol    = "tcp"
+  cidr_blocks = ["189.73.139.107/32"] # coloquei meu ip aqui
+  security_group_id = aws_security_group.rds_sg.id
+}
+
+resource "aws_db_subnet_group" "ada_db_subnet_group" {
+  name       = "ada_db_subnet_group"
+  subnet_ids = module.vpc.private_subnets
+  tags = {
+    Name = "Ada DB subnet group"
+  }
+}
+
+resource "aws_db_instance" "ada_rds" {
+  allocated_storage    = 20
+  engine               = "mysql"
+  engine_version       = "5.7"
+  instance_class       = "db.t2.micro"
+  db_name              = "adaDatabase"
+  identifier           = "ada-database"
+  username             = "ada_admin"
+  password             = "senhaDoBanco"
+  parameter_group_name = "default.mysql5.7"
+  skip_final_snapshot  = true
+  db_subnet_group_name = aws_db_subnet_group.ada_db_subnet_group.name
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
 }
 
 resource "aws_ecr_repository" "ada_frontend" {
