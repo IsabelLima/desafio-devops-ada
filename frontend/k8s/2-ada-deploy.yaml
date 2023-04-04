@@ -28,4 +28,9 @@ spec:
           limits:
             memory: "1024Mi"
             cpu: "1000m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 4200
+          initialDelaySeconds: 300
 status: {}
