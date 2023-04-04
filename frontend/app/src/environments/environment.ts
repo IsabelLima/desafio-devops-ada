@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiURL: 'a34a81236922f4ab884d6c0a2dc2b7bf-188424890.us-east-1.elb.amazonaws.com:8080',
+  apiURL: '172.20.8.70:8080',
   clientId: 'my-angular-app',
   clientSecret: '@321',
   obterTokenUrl: '/oauth/token'

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ada-frontend-service
+  namespace: ada-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: ada-frontend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 4200
+      targetPort: 4200
